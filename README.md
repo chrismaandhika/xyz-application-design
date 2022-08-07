@@ -16,6 +16,11 @@ Asumsi yang digunakan:
 - UI untuk approval peminjaman di luar scope.
 
 High level architecture dapat dilihat di file xyz_component_diagram.png.
+
 ER diagram dapat dilihat di file xyz_erd.png.
+
 API spec dapat dilihat di xyz-openapi-spec.yml (YAML), atau xyz_openapi_spec.pdf (PDF).
+
 Screen draft dapat dilihat di xyz_screen_flow.png.
+
+Raw file di app.diagrams.net dapat ditemukan di dalam folder /raw.

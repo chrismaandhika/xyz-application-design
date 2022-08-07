@@ -1,0 +1,569 @@
+openapi: 3.0.3
+info:
+  title: XYZ P2P - OpenAPI 3.0
+  description: |-
+    API Spec untuk pengembangan aplikasi mobile XYZ P2P Lending
+  termsOfService: http://swagger.io/terms/
+  contact:
+    email: chrismaandhika@gmail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+tags:
+  - name: Authentication
+    description: user authentication 
+  - name: Registration
+    description: enable user to register as borrower
+  - name: Loan
+    description: enable loan activities
+  - name: Notification
+    description: enable notification activities
+paths:
+  /user/token:
+    post:
+      tags:
+        - Authentication
+      summary: Request access token or refresh token
+      description: Request access token by username and password, or refresh token.
+      requestBody:
+        description: Request a token
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Authentication'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '400':
+          description: bad request
+        '401':
+          description: credential not valid
+        '500':
+          description: internal server error
+      security:
+        - oauth2Password:
+            - read
+            - write
+  /user/signup:
+    post:
+      tags:
+        - Authentication
+      summary: Sign up for new user account creation
+      description: new user sign up using username and email that never used before.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUp'
+        required: true
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: bad request
+        '500':
+          description: internal server error
+  /user/verify:
+    get:
+      tags:
+        - Authentication
+      summary: verify user account to be activated
+      description: verify user account using verification code
+      parameters:
+        - in: query
+          name: username
+          schema:
+            type: string
+        - in: query
+          name: verification_code
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: incorrect username or verification code
+        '500':
+          description: internal server error
+  /borrower/register:
+    post:
+      tags:
+        - Registration
+      summary: Register a new borrower
+      description: Borrower registration after account successfully created.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BorrowerRegistration'
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: bad request
+        '500':
+          description: internal server error
+        
+  /borrower/upload:
+    post:
+      tags:
+        - Registration
+      summary: send metadata of file to be uploaded and get upload link
+      description: To send metadata of file to be uploaded and get upload link in return.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BorrowerUploadRequest'
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BorrowerUploadResponse'
+        '400':
+          description: bad request.
+        '500':
+          description: internal server error.
+  /file/upload/{signedCode}:
+    put:
+      tags:
+        - Registration
+      summary: upload borrower registration file
+      description: upload file for registration into file server
+      parameters:
+        - in: path
+          required: true
+          name: signedCode
+          schema:
+            type: string
+          description: signed code from server
+      requestBody:
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: OK.
+        '400':
+          description: bad request.
+        '500':
+          description: internal server error.
+  /loan/proposal:
+    post:
+      tags:
+        - Loan
+      summary: create loan proposal
+      description: borrower to create loan proposal.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoanProposalRequest'
+      responses:
+        '200':
+          description: OK.
+        '400':
+          description: bad request.
+        '409':
+          description: there is already an ongoing proposal.
+        '500':
+          description: internal server error.
+    get:
+      tags:
+        - Loan
+      summary: see loan proposal
+      description: borrower to see her loan proposal.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                 $ref: '#/components/schemas/LoanProposalResponse'
+        '404':
+          description: not found.
+        '500':
+          description: internal server error>
+  /loan/approval:
+    post:
+      tags:
+        - Loan
+      summary: approve a loan proposal
+      description: approver to approve a loan proposal.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoanApprovalRequest'
+      responses:
+        '200':
+          description: OK
+        '202':
+          description: proposal is already approved before.
+        '404': 
+          description: proposal not found.
+        '500': 
+          description: internal server error.
+  /loan/proposal/{proposalId}:  
+    get:
+      tags:
+        - Loan
+      summary: preview loan proposal to be approved
+      description: approver to preview loan proposal to be approved.
+      parameters:
+        - in: path
+          required: true
+          name: proposalId
+          schema:
+            type: string
+          description: ID of proposal.
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanApprovalResponse'
+        '404': 
+          description: proposal not found.
+        '500':
+          description: internal server error.
+  /loan:
+    get:
+      tags:
+        - Loan
+      summary: preview ongoing loan
+      description: borrower to preview her ongoing loan.
+      responses:
+        '200':
+          description: OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanResponse'
+        '404': 
+          description: no ongoing loan found.
+        '500': 
+          description: internal server error.
+  /notification/sms/callback:
+    post:
+      tags:
+        - Notification
+      summary: accept notification callback
+      description: to accept responses from sms gateway provider.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationCallbackResponse'
+      responses:
+        '200':
+          description: OK.
+        '202':
+          description: request already have callback before.
+        '404':
+          description: request not found.
+        '500':
+          description: internal server error.
+components:
+  schemas:
+    Authentication:
+      type: object
+      properties:
+        grant_type:
+          type: string
+          description: password to request access token, referesh_token to request refresh token.
+          enum:
+            - password
+            - refresh_token
+        username:
+          type: string
+          description: required for password grant type.
+        password:
+          type: string
+          description: required for password grant type.
+        refresh_token:
+          type: string
+          description: required for refresh_token grant type.
+      xml:
+        name: authentication
+    Token:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: containing the access token, for password grant type.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: string
+          description: token live span, in second.
+          example: 3600
+        scope:
+          type: string
+          description: privilege on resource, delimited by comma.
+          example: read,write
+          enum:
+            - read
+            - write
+        refresh_token:
+          type: string
+          description: containing the refresh token, for refresh_token grant type.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+    SignUp:
+      required:
+        - username
+        - password
+        - confirm_password
+        - email
+      type: object
+      properties:
+        username:
+          type: string
+          description: can be email, phone number, or any word.
+          example: johndoe
+        password:
+          type: string
+          example: 'R4nd0mPassw0rd#'
+        confirm_password:
+          type: string
+          example: 'R4nd0mPassw0rd#'
+        email:
+          type: string
+          example: johndoe@email.com
+          description: must use email address never used before.
+    BorrowerRegistration:
+      type: object
+      properties:
+        full_name:
+          type: string
+          description: name that is written on national ID card.
+          example: 'Jon Doe P.H.'
+        birth_date:
+          type: string
+          format: full-date
+          example: '1988-08-02'
+          description: borrower's birth date.
+        national_id:
+          type: string
+          description: borrower's national id number.
+          example: '3275012312321326'
+        job:
+          type: string
+          description: borrower's current job.
+          example: QA Engineer
+        mobile_phone:
+          type: string
+          format: int64
+          description: borrower's mobile phone number.
+          example: '083123122323'
+        address:
+          type: string
+          description: borrower's home address.
+          example: 'Jl. Anggur 5, No. 112, Kec. Bumicahaya, Kel. Kaliwangi.'
+        postal_code:
+          type: string
+          description: borrower's home postal code.
+          example: '15312'
+        city:
+          type: string
+          description: borrower's home city.
+          example: JKT
+          enum:
+            - JKT
+            - BNDG
+            - SOLO
+            - BGR
+        province:
+          type: string
+          description: borrower's home province.
+          example: JABAR
+          enum:
+            - JABAR
+            - JATIM
+            - JATENG
+            - SULUT
+        country:
+          type: string
+          description: borrower's nationality.
+          example: IND
+          enum:
+            - IND
+        term_condition:
+          type: boolean
+          description: sign that user has agreed to terms and conditions.
+    BorrowerUploadRequest:
+      required:
+        - file_type
+      type: object
+      properties:
+        file_type:
+          type: string
+          description: file type.
+          enum:
+            - ktp
+            - photo
+        size:
+          type: string
+          description: file size in bytes.
+          example: 1240500
+    BorrowerUploadResponse:
+      type: object
+      properties:
+        upload_link:
+          type: string
+          description: link for upload
+          format: uri
+          example: "/file/upload/xsdf213asafsdas12"
+    LoanProposalRequest:
+      required:
+        - amount
+        - tenure
+      type: object
+      properties:
+        amount:
+          type: string
+          format: int64
+          description: loan amount.
+        tenure:
+          type: string
+          description: payment tenure.
+          enum:
+            - 3m
+            - 6m
+            - 9m
+            - 12m
+    LoanProposalResponse:
+      type: object
+      properties:
+        amount:
+          type: string
+          format: int64
+          description: loan amount.
+        tenure:
+          type: string
+          description: payment tenure.
+          enum:
+            - 3m
+            - 6m
+            - 9m
+            - 12m
+        status:
+          type: string
+          description: approval status.
+          enum:
+            - REJECTED
+            - APPROVED
+        created_date:
+          type: string
+          format: full-date
+          description: proposal creation date.
+        finalized_date:
+          type: string
+          format: full-date
+          description: the date when proposal get approved/rejected.
+    LoanApprovalRequest:
+      type: object
+      properties:
+        proposal_id:
+          type: string
+          description: proposal ID to be approved.
+    LoanApprovalResponse:
+      type: object
+      properties:
+        proposal_id:
+          type: string
+          description: proposal id.
+        amount:
+          type: string
+          format: int64
+          description: loan amount.
+        tenure:
+          type: string
+          description: payment tenure.
+          enum:
+            - 3m
+            - 6m
+            - 9m
+            - 12m
+        created_date:
+          type: string
+          format: full-date
+          description: proposal creation date.
+    BillingHistory:
+      type: object
+      properties:
+        amount:
+          type: string
+          format: int64
+          description: amount to be paid in this billing.
+        period:
+          type: string
+          example: '11/2020'
+          description: monthly period of this billing.
+        status:
+          type: string
+          example: 'P (paid)'
+          enum:
+            - P
+            - NP
+    LoanResponse:
+      type: object
+      properties:
+        amount_total:
+          type: string
+          format: int64
+          description: loan amount.
+        tenure:
+          type: string
+          description: payment tenure.
+          enum:
+            - 3m
+            - 6m
+            - 9m
+            - 12my
+        amount_paid:
+          type: string
+          format: int64
+          description: paid amount.
+        amount_unpaid:
+          type: string
+          format: int64
+          description: unpaid amount.
+        billing_history:
+          type: array
+          xml:
+            wrapped: true
+          items:
+            $ref: '#/components/schemas/BillingHistory'
+    NotificationCallbackResponse:
+      type: object
+      properties:
+        transaction_id:
+          type: string
+          description: transaction ID use for SMS request identifier.
+        result_code:
+          type: string
+          format: int64
+          example: '0'
+  securitySchemes:
+    oauth2Password:
+      type: oauth2
+      flows:
+        password:
+          tokenUrl: https://api.getbase.com/oauth2/token
+          scopes:
+            read: Grant access to read data
+            write: Grant access to modify data

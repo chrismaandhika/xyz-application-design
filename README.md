@@ -19,7 +19,7 @@ High level architecture dapat dilihat di file xyz_component_diagram.png.
 
 ER diagram dapat dilihat di file xyz_erd.png.
 
-API spec dapat dilihat di xyz-openapi-spec.yml (YAML), atau xyz_openapi_spec.pdf (PDF).
+API spec dapat dilihat di xyz-openapi-spec.yml (YAML), atau xyz_openapi_spec.pdf (PDF). File xyz-openapi-spec.yml dapat divisualisasi lewat aplikasi online https://editor.swagger.io/.
 
 Screen draft dapat dilihat di xyz_screen_flow.png.
 
